@@ -1,5 +1,3 @@
-import { cssBundleHref } from "@remix-run/css-bundle";
-
 import type { V2_MetaFunction, LoaderFunction, LinksFunction } from "@remix-run/node";
 import {
   Links,
@@ -14,8 +12,10 @@ import { rootAuthLoader } from "@clerk/remix/ssr.server";
 
 import { ClerkApp, V2_ClerkErrorBoundary } from "@clerk/remix";
 
+import stylesheet from "~/styles.global.css";
+
 export const links: LinksFunction = () => [
-  ...(cssBundleHref ? [{ rel: "stylesheet", href: cssBundleHref }] : []),
+  { rel: "stylesheet", href: stylesheet }
 ];
  
 export const meta: V2_MetaFunction = () => {
