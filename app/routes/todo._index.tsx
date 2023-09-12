@@ -1,8 +1,8 @@
 import { getAuth } from "@clerk/remix/ssr.server";
-import type { LoaderArgs} from "@remix-run/node";
+import type { ActionArgs, LoaderArgs} from "@remix-run/node";
 import { json } from "@remix-run/node";
-import { Link, useLoaderData } from "@remix-run/react";
-import { getTodoListItems } from "~/models/todo.server";
+import { Form, Link, Outlet, useLoaderData } from "@remix-run/react";
+import { deleteTodo, getTodoListItems, toggleTodo } from "~/models/todo.server";
 
 export const loader = async (args: LoaderArgs) => {
     const { userId } = await getAuth(args);
@@ -17,8 +17,37 @@ export const loader = async (args: LoaderArgs) => {
   return json({ todos });
 };
 
+export const action = async (args: ActionArgs) => {
+  const { userId } = await getAuth(args);
+
+  if (!userId) return json({ errors: { title: "Unauthorized" } }, { status: 401 });
+  const data = new URLSearchParams(await args.request.text())
+  
+  if (!data.has("todoId")) {
+    return json({ errors: { title: "Todo not found" } }, { status: 404 });
+  }
+
+  const todoId = Number(data.get("todoId"));
+
+  if (isNaN(todoId)) {
+    return json({ errors: { title: "Todo is not a number" } }, { status: 404 });
+  }
+
+  switch (args.request.method.toLowerCase()) {
+    case "delete":
+      return await deleteTodo({ id: todoId, userId });
+    case "patch":
+      return await toggleTodo({
+        id: todoId,
+        userId,
+      });
+    default:
+      return json({ errors: { title: "Method not allowed" } }, { status: 405 });
+  }
+};
+
 export default function TodoIndexPage() {
-    const data = useLoaderData<typeof loader>();
+  const data = useLoaderData<typeof loader>();
 
   if (!data) {
     return null;
@@ -46,12 +75,32 @@ export default function TodoIndexPage() {
       <Link to="new" className="text-blue-500 underline">
         add
       </Link>
+      <Outlet />
       <ul className="flex flex-col gap-2">
         {data.todos.map((todo) => (
           <li key={todo.id} className="flex gap-2">
-            <Link to={String(todo.id)} className="flex-1">
-              {todo.title}
-            </Link>
+            <Form method="patch">
+              <input type="hidden" name="todoId" value={todo.id} />
+              <button type="submit">
+                <label className="p-2 flex items-center gap-2 pl-0">
+                  <input
+                    type="checkbox"
+                    className="rounded bg-blue-500 px-4 py-2 text-white hover:bg-blue-600 focus:bg-blue-400"
+                    defaultChecked={todo.isDone ?? false}
+                  />
+                  {todo.title}
+                </label>
+              </button>
+            </Form>
+            <Form method="delete">
+              <input type="hidden" name="todoId" value={todo.id} />
+              <button
+                type="submit"
+                className="rounded bg-blue-500 px-4 py-2 text-white hover:bg-blue-600 focus:bg-blue-400"
+              >
+                Delete
+              </button>
+            </Form>
           </li>
         ))}
       </ul>

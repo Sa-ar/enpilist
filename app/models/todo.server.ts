@@ -32,3 +32,41 @@ export function deleteTodo({
 }: { id: number; userId: string }) {
   return db.delete(todos).where(and(eq(todos.id, id), eq(todos.userId, userId))).execute();
 }
+
+export function updateTodo({
+  id,
+  userId,
+  title,
+}: {
+  id: number;
+  userId: string;
+  title: string;
+}) {
+  return db
+    .update(todos)
+    .set({ title })
+    .where(and(eq(todos.id, id), eq(todos.userId, userId)))
+    .returning();
+}
+
+export async function toggleTodo({
+  id,
+  userId,
+}: {
+  id: number;
+  userId: string;
+}) {
+  const [{ isDone }] = await db
+    .select({
+      isDone: todos.isDone,
+    })
+    .from(todos)
+    .where(and(eq(todos.id, id), eq(todos.userId, userId)))
+    .execute();
+
+  return db
+    .update(todos)
+    .set({ isDone: !isDone })
+    .where(and(eq(todos.id, id), eq(todos.userId, userId)))
+    .returning();
+}
