@@ -3,9 +3,9 @@ import type { V2_MetaFunction } from "@remix-run/node";
 import {
   SignedIn,
   SignedOut,
-  RedirectToSignIn,
   UserButton,
 } from "@clerk/remix";
+import { Link } from "@remix-run/react";
 
 export const meta: V2_MetaFunction = () => {
   return [
@@ -22,9 +22,12 @@ export default function Index() {
       <SignedIn>
         <p>You are signed in!</p>
         <UserButton />
+        <Link to="/todo">My todo list</Link>
       </SignedIn>
       <SignedOut>
-        <RedirectToSignIn />
+        <p>You are not signed in.</p>
+        <Link to="/sign-up">Sign up</Link>
+        <Link to="/sign-in">Sign in</Link>
       </SignedOut>
     </div>
   );
